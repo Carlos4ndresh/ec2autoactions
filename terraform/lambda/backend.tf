@@ -22,3 +22,13 @@ provider "aws" {
     }
   }
 }
+
+data "terraform_remote_state" "ec2_outputs" {
+  backend = "s3"
+  config {
+    bucket  = "terraform-projects-state"
+    key     = "ec2_autoactions.tfstate"
+    region  = "us-east-2"
+    dynamodb_table = "terraform-state-lock-table"
+  }
+}

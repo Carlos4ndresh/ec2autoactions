@@ -45,6 +45,9 @@ resource "aws_lambda_function" "healthCheckFailRebootLambda" {
   role             = aws_iam_role.healthcheck_lambda_role.arn
   runtime          = "python3.8"
   source_code_hash = filebase64sha256("../../lambda_code/ec2_restart.zip")
+  environment {
+
+  }
 }
 
 resource "aws_sns_topic_subscription" "lambda_to_sns_subs" {
