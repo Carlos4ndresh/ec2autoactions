@@ -36,15 +36,16 @@ EOF
 
 resource "aws_iam_role_policy_attachment" "lambda_policy_att" {
   policy_arn = aws_iam_policy.lambda_policy.arn
-  role       = aws_iam_role.healthcheck_lambda_role.arn
+  role       = aws_iam_role.healthcheck_lambda_role.name
 }
 
 resource "aws_lambda_function" "healthCheckFailRebootLambda" {
+  filename         = "ec2_restart.py.zip"
   function_name    = "healthCheckFailReboot"
-  handler          = "healthCheckFailReboot"
+  handler          = "lambda_handler  "
   role             = aws_iam_role.healthcheck_lambda_role.arn
   runtime          = "python3.8"
-  source_code_hash = filebase64sha256("../../lambda_code/ec2_restart.zip")
+  source_code_hash = filebase64sha256("../../lambda_code/ec2_restart.py.zip")
   environment {
 
   }
