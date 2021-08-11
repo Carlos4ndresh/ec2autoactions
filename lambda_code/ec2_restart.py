@@ -47,7 +47,7 @@ def reboot_instance(instanceID, regionName) -> "instanceID":
     instance.start()
     return instanceID
 
-
+// comment
 def notify_about_reboot(instanceID, snsarn) -> True:
     """
     Put SNS message about reboot to snsarn
