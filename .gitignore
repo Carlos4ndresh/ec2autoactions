@@ -30,3 +30,6 @@ override.tf.json
 ../.idea/*
 .idea/*
 .DS_Store
+/terraform/ec2/.terraform/
+/terraform/lambda/.terraform/
+!/terraform/lambda/.terraform.lock.hcl

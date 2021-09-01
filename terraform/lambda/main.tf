@@ -39,15 +39,27 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_att" {
   role       = aws_iam_role.healthcheck_lambda_role.name
 }
 
+data "archive_file" "ec2_restart" {
+  type = "zip"
+  source_file = "${path.root}/../../lambda_code/ec2_restart.py"
+  output_file_mode = "0666"
+  output_path = "${path.module}/files/ec2_restart.py.zip"
+}
+
 resource "aws_lambda_function" "healthCheckFailRebootLambda" {
-  filename         = "ec2_restart.py.zip"
+  filename         = "${path.module}/files/ec2_restart.py.zip"
   function_name    = "healthCheckFailReboot"
-  handler          = "lambda_handler  "
+  handler          = "healthCheckFailReboot.lambda_handler"
   role             = aws_iam_role.healthcheck_lambda_role.arn
   runtime          = "python3.8"
-  source_code_hash = filebase64sha256("../../lambda_code/ec2_restart.py.zip")
+  source_code_hash = data.archive_file.ec2_restart.output_base64sha256
   environment {
-
+    variables = {
+      ALARM_NAME     = "EC2_UNREACHABLE"
+      REGION         = "us-east-2"
+      INSTANCE_ID    = "i-xxxxxxx"
+      OUTPUT_SNS_ARN = aws_sns_topic.ec2_reboots.arn
+    }
   }
 }
 
@@ -55,4 +67,11 @@ resource "aws_sns_topic_subscription" "lambda_to_sns_subs" {
   endpoint  = aws_lambda_function.healthCheckFailRebootLambda.arn
   protocol  = "lambda"
   topic_arn = aws_sns_topic.ec2_reboots.arn
+}
+
+resource "aws_sns_topic_subscription" "email_to_sns_sub" {
+  endpoint = "carlos.herrera@outlook.com"
+  protocol = "email"
+  topic_arn = aws_sns_topic.ec2_reboots.arn
+
 }

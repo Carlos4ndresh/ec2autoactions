@@ -69,3 +69,20 @@ resource "aws_route53_record" "cname_for_testec2" {
   zone_id = data.aws_route53_zone.test_zone.id
   records = [aws_eip.elastic_ip_healthcheck.public_ip]
 }
+
+resource "aws_route53_health_check" "ec2_healthcheck" {
+  type                  = "HTTP"
+  port                  = 80
+  fqdn                  = aws_route53_record.cname_for_testec2.fqdn
+  ip_address            = aws_eip.elastic_ip_healthcheck.public_ip
+  failure_threshold     = 2
+  request_interval      = 30
+  cloudwatch_alarm_name = aws_cloudwatch_metric_alarm.alarm.alarm_name
+  regions               = ["us-east-1", "us-east-2"]
+  resource_path         = "/"
+}
+resource "aws_cloudwatch_metric_alarm" "alarm" {
+  alarm_name          = "terraform-ec2-test"
+  comparison_operator = ""
+  evaluation_periods  = 0
+}
