@@ -52,7 +52,7 @@ def notify_about_reboot(instanceID, snsarn) -> True:
     """
     Put SNS message about reboot to snsarn
     """
-    client = boto3.client('sns', region_name='us-east-2')
+    client = boto3.client('sns', region_name='us-east-1')
     client.publish(TopicArn=snsarn, Message=f'EC2 instance {instanceID} was rebooted!')
     return True
 

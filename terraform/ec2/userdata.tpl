@@ -1,3 +1,6 @@
 #! /bin/bash
-yum update -y && yum upgrade -y
-yum install -y nginx
+sudo yum update -y && sudo yum upgrade -y
+sudo yum install epel-release -y
+sudo yum install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx

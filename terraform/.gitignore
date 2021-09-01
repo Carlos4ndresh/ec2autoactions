@@ -31,4 +31,4 @@ override.tf.json
 /.terraform/
 /ec2/.terraform.lock.hcl
 /.idea/
-!/lambda/.terraform.lock.hcl
+/lambda/.terraform.lock.hcl

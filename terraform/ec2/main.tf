@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-2"
+  region = "us-east-1"
   default_tags {
     tags = {
       Environment = "Test"
@@ -37,7 +37,7 @@ data "aws_ami" "latest_centos" {
 resource "aws_instance" "test_ec2" {
   ami           = data.aws_ami.latest_centos.id
   instance_type = "t3.micro"
-  key_name      = "generic_ec2_key"
+  key_name      = "nvirginia_ec2_key"
 
   ebs_block_device {
     device_name           = "/dev/sda1"
@@ -78,11 +78,24 @@ resource "aws_route53_health_check" "ec2_healthcheck" {
   failure_threshold     = 2
   request_interval      = 30
   cloudwatch_alarm_name = aws_cloudwatch_metric_alarm.alarm.alarm_name
-  regions               = ["us-east-1", "us-east-2"]
+  regions               = ["us-east-1", "us-west-2", "us-west-1"]
   resource_path         = "/"
 }
 resource "aws_cloudwatch_metric_alarm" "alarm" {
-  alarm_name          = "terraform-ec2-test"
-  comparison_operator = ""
-  evaluation_periods  = 0
+  alarm_name                = "terraform-ec2-test"
+  namespace                 = "AWS/Route53"
+  metric_name               = "HealthCheckStatus"
+  comparison_operator       = "LessThanThreshold"
+  evaluation_periods        = "1"
+  period                    = "60"
+  statistic                 = "Minimum"
+  threshold                 = "1"
+  unit                      = "None"
+  alarm_description         = "This metric monitors whether the service endpoint is down or not."
+  alarm_actions             = [data.terraform_remote_state.lambda_state.outputs.sns_topic_arn]
+  insufficient_data_actions = [data.terraform_remote_state.lambda_state.outputs.sns_topic_arn]
+  treat_missing_data        = "breaching"
+  dimensions = {
+    HealthCheckId = aws_route53_health_check.ec2_healthcheck.id
+  }
 }

@@ -55,8 +55,8 @@ resource "aws_lambda_function" "healthCheckFailRebootLambda" {
   source_code_hash = data.archive_file.ec2_restart.output_base64sha256
   environment {
     variables = {
-      ALARM_NAME     = "EC2_UNREACHABLE"
-      REGION         = "us-east-2"
+      ALARM_NAME     = "INSERT_ALARM_NAME"
+      REGION         = "us-east-1"
       INSTANCE_ID    = "i-xxxxxxx"
       OUTPUT_SNS_ARN = aws_sns_topic.ec2_reboots.arn
     }
