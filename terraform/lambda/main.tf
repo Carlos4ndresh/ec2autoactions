@@ -40,14 +40,14 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_att" {
 }
 
 data "archive_file" "ec2_restart" {
-  type = "zip"
-  source_file = "${path.root}/../../lambda_code/ec2_restart.py"
+  type             = "zip"
+  source_file      = "${path.root}/../../lambda_code/ec2_restart.py"
   output_file_mode = "0666"
-  output_path = "${path.module}/files/ec2_restart.py.zip"
+  output_path      = "${path.module}/files/ec2_restart.py.zip"
 }
 
 resource "aws_lambda_function" "healthCheckFailRebootLambda" {
-  filename         = "${path.module}/files/ec2_restart.py.zip"
+  filename         = data.archive_file.ec2_restart.output_path
   function_name    = "healthCheckFailReboot"
   handler          = "healthCheckFailReboot.lambda_handler"
   role             = aws_iam_role.healthcheck_lambda_role.arn
@@ -61,6 +61,14 @@ resource "aws_lambda_function" "healthCheckFailRebootLambda" {
       OUTPUT_SNS_ARN = aws_sns_topic.ec2_reboots.arn
     }
   }
+  depends_on = [
+    aws_cloudwatch_log_group.lambda_restart_logs
+  ]
+}
+
+resource "aws_cloudwatch_log_group" "lambda_restart_logs" {
+  name              = "/aws/lambda/${aws_lambda_function.healthCheckFailRebootLambda.function_name}"
+  retention_in_days = 7
 }
 
 resource "aws_sns_topic_subscription" "lambda_to_sns_subs" {
@@ -70,8 +78,8 @@ resource "aws_sns_topic_subscription" "lambda_to_sns_subs" {
 }
 
 resource "aws_sns_topic_subscription" "email_to_sns_sub" {
-  endpoint = "carlos.herrera@outlook.com"
-  protocol = "email"
+  endpoint  = "carlos.herrera@outlook.com"
+  protocol  = "email"
   topic_arn = aws_sns_topic.ec2_reboots.arn
 
 }

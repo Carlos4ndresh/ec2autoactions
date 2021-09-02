@@ -39,8 +39,7 @@ resource "aws_instance" "test_ec2" {
   instance_type = "t3.micro"
   key_name      = "nvirginia_ec2_key"
 
-  ebs_block_device {
-    device_name           = "/dev/sda1"
+  root_block_device {
     delete_on_termination = true
     volume_size           = 80
     volume_type           = "gp3"
@@ -77,7 +76,6 @@ resource "aws_route53_health_check" "ec2_healthcheck" {
   ip_address            = aws_eip.elastic_ip_healthcheck.public_ip
   failure_threshold     = 2
   request_interval      = 30
-  cloudwatch_alarm_name = aws_cloudwatch_metric_alarm.alarm.alarm_name
   regions               = ["us-east-1", "us-west-2", "us-west-1"]
   resource_path         = "/"
 }
