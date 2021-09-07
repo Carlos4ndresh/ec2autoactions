@@ -30,20 +30,19 @@ def reboot_instance(instanceID, regionName) -> "instanceID":
     instance = ec2.Instance(instanceID)
 
     try:
+        print("Trying to stop instance")
         instance.stop()
         time.sleep(30)
         instance.stop(Force=True)
-    except:
-        pass
-
-    for i in range(180):  # wait 3 minutes
-        instance = ec2.Instance(instanceID)
+        time.sleep(180)
         if instance.state['Code'] == 80:
-            break
-        time.sleep(1)
-    else:
-        raise Exception('Unable to stop instance')
+            pass
+        else:
+            raise Exception('Unable to stop instance')
+    except Exception as exp:
+        print(exp)
 
+    print("Starting instance...")
     instance.start()
     return instanceID
 

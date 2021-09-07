@@ -32,3 +32,4 @@ override.tf.json
 .DS_Store
 /terraform/ec2/.terraform/
 /terraform/lambda/.terraform/
+/terraform/ec2/terraform.tfvars

@@ -8,6 +8,7 @@ provider "aws" {
   }
 }
 
+// Implement Sec group SSH only for my IP
 data "aws_vpc" "region_vpc" {
 }
 
@@ -34,10 +35,37 @@ data "aws_ami" "latest_centos" {
   }
 }
 
+resource "aws_security_group" "allow_ssh_from_my_ip" {
+  name        = "allow_ssh_only_from_my_ip"
+  description = "the name says it all"
+  vpc_id      = data.aws_vpc.region_vpc.id
+  ingress {
+    from_port = 22
+    protocol = "TCP"
+    to_port = 22
+    description = "SSH from My IP"
+    cidr_blocks = [var.my_ip]
+  }
+  ingress {
+    from_port = 80
+    protocol = "TCP"
+    to_port = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port = 0
+    protocol = "-1"
+    to_port = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+// include security group for only my public IP
 resource "aws_instance" "test_ec2" {
-  ami           = data.aws_ami.latest_centos.id
-  instance_type = "t3.micro"
-  key_name      = "nvirginia_ec2_key"
+  ami             = data.aws_ami.latest_centos.id
+  instance_type   = "t3.micro"
+  key_name        = "nvirginia_ec2_key"
+  vpc_security_group_ids = [aws_security_group.allow_ssh_from_my_ip.id]
 
   root_block_device {
     delete_on_termination = true
@@ -67,33 +95,4 @@ resource "aws_route53_record" "cname_for_testec2" {
   ttl     = 300
   zone_id = data.aws_route53_zone.test_zone.id
   records = [aws_eip.elastic_ip_healthcheck.public_ip]
-}
-
-resource "aws_route53_health_check" "ec2_healthcheck" {
-  type                  = "HTTP"
-  port                  = 80
-  fqdn                  = aws_route53_record.cname_for_testec2.fqdn
-  ip_address            = aws_eip.elastic_ip_healthcheck.public_ip
-  failure_threshold     = 2
-  request_interval      = 30
-  regions               = ["us-east-1", "us-west-2", "us-west-1"]
-  resource_path         = "/"
-}
-resource "aws_cloudwatch_metric_alarm" "alarm" {
-  alarm_name                = "terraform-ec2-test"
-  namespace                 = "AWS/Route53"
-  metric_name               = "HealthCheckStatus"
-  comparison_operator       = "LessThanThreshold"
-  evaluation_periods        = "1"
-  period                    = "60"
-  statistic                 = "Minimum"
-  threshold                 = "1"
-  unit                      = "None"
-  alarm_description         = "This metric monitors whether the service endpoint is down or not."
-  alarm_actions             = [data.terraform_remote_state.lambda_state.outputs.sns_topic_arn]
-  insufficient_data_actions = [data.terraform_remote_state.lambda_state.outputs.sns_topic_arn]
-  treat_missing_data        = "breaching"
-  dimensions = {
-    HealthCheckId = aws_route53_health_check.ec2_healthcheck.id
-  }
 }
